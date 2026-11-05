@@ -53,3 +53,24 @@ if st.button("Запитати", type="primary", disabled=not question.strip()):
             with st.expander(f"{i}. {s['tool']}({json.dumps(s['args'], ensure_ascii=False)})"):
                 st.text(s["result"][:3000])
         st.metric("Викликів інструментів", len(steps))
+
+# ---------------------------------------------------------------------------
+# Запуск тестів. Результати (tool_check, llm_judge) переглядаються в LangSmith.
+# ---------------------------------------------------------------------------
+st.divider()
+if st.button("Запустити тести в LangSmith"):
+    from evals import DATASET, LAST_EXPERIMENT, run_tests
+
+    with st.spinner("Тести виконуються (1–3 хвилини)..."):
+        try:
+            run_tests()
+        except Exception as e:
+            st.error(f"Помилка: {e}")
+            st.stop()
+
+    url = LAST_EXPERIMENT.get("url")
+    if url:
+        st.success("Тести завершено.")
+        st.link_button("Відкрити результати в LangSmith", url)
+    else:
+        st.success(f"Тести завершено. Результати: LangSmith → Datasets & Experiments → {DATASET} → Experiments.")

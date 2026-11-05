@@ -151,6 +151,20 @@ def llm_judge(inputs: dict, outputs: dict, reference_outputs: dict) -> dict:
 # ---------------------------------------------------------------------------
 # Запуск
 # ---------------------------------------------------------------------------
+LAST_EXPERIMENT: dict = {}  # назва і посилання на останній експеримент у LangSmith
+
+
+def experiment_url(client: Client, experiment_name: str) -> str | None:
+    """Посилання на сторінку експерименту в LangSmith (як друкує сам evaluate)."""
+    try:
+        project = client.read_project(project_name=experiment_name)
+        dataset = client.read_dataset(dataset_name=DATASET)
+        base = project.url.split("/o/")[0]
+        return f"{base}/o/{project.tenant_id}/datasets/{dataset.id}/compare?selectedSessions={project.id}"
+    except Exception:
+        return None
+
+
 def run_tests(recreate: bool = False) -> list[dict]:
     """Проганяє агента по датасету і повертає рядки результатів (для консолі та UI)."""
     client = Client()
@@ -166,6 +180,7 @@ def run_tests(recreate: bool = False) -> list[dict]:
     )
 
     rows = []
+    LAST_EXPERIMENT.clear()
     for r in results:
         ex, run_ = r["example"], r["run"]
         scores = {e.key: (e.score, e.comment) for e in r["evaluation_results"]["results"]}
@@ -179,6 +194,8 @@ def run_tests(recreate: bool = False) -> list[dict]:
             "llm_judge": scores.get("llm_judge", (None, ""))[0],
             "llm_judge_comment": scores.get("llm_judge", (None, ""))[1],
         })
+    LAST_EXPERIMENT.update(name=results.experiment_name,
+                           url=experiment_url(client, results.experiment_name))
     return rows
 
 
