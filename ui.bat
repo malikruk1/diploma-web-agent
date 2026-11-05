@@ -8,5 +8,5 @@ echo Перевіряю бібліотеки...
 echo Запускаю вебінтерфейс: http://localhost:8501
 echo Щоб зупинити — закрий це вікно.
 start "" cmd /c "timeout /t 6 >nul & start http://localhost:8501"
-.venv\Scripts\python.exe -m streamlit run app.py --server.headless true --browser.gatherUsageStats false
+.venv\Scripts\python.exe -m streamlit run app.py --server.headless true --browser.gatherUsageStats false --client.toolbarMode minimal
 pause

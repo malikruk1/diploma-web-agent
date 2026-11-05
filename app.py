@@ -11,13 +11,13 @@ import streamlit as st
 
 st.set_page_config(page_title="Веб-агент ФРЕКС", page_icon="🔎", layout="wide")
 
-from agent import MODEL, final_answer, run, trajectory  # noqa: E402
+from agent import final_answer, run, trajectory  # noqa: E402
+
+# Ховаємо службове меню Streamlit (Deploy, ⋮)
+st.markdown("<style>[data-testid='stToolbar'], [data-testid='stDecoration'], #MainMenu {display: none;}</style>",
+            unsafe_allow_html=True)
 
 st.title("Веб-агент ФРЕКС")
-st.caption(
-    f"Дипломна робота: автоматизоване оцінювання веб-агентів · модель агента: `{MODEL}` · "
-    "джерело: rex.knu.ua"
-)
 
 # ---------------------------------------------------------------------------
 # Питання -> відповідь + траєкторія.
@@ -53,5 +53,3 @@ if st.button("Запитати", type="primary", disabled=not question.strip()):
             with st.expander(f"{i}. {s['tool']}({json.dumps(s['args'], ensure_ascii=False)})"):
                 st.text(s["result"][:3000])
         st.metric("Викликів інструментів", len(steps))
-
-    st.caption("Повний трейс цього запуску — на smith.langchain.com, проєкт diploma-web-agent.")
