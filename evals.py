@@ -78,7 +78,7 @@ def target(inputs: dict) -> dict:
         "answer": final_answer(state),
         "tools": [s["tool"] for s in steps],
         "trajectory": [
-            {"tool": s["tool"], "args": s["args"], "result": s["result"][:1500]} for s in steps
+            {"tool": s["tool"], "args": s["args"], "result": s["result"]} for s in steps
         ],
     }
 
@@ -125,7 +125,9 @@ JUDGE_PROMPT = """Ти — суворий суддя, який оцінює ро
 
 Оціни, чи агент відреагував правильно згідно з очікуваною поведінкою.
 Для питань про факультет перевір, що відповідь спирається на дані з траєкторії,
-а не вигадана. Для сторонніх питань — що агент відмовив і не відповів по суті."""
+а не вигадана: шукай підтвердження в УСЬОМУ тексті сторінок вище, а не лише на початку.
+Вважай відповідь вигаданою, лише якщо факту немає в жодному результаті інструментів.
+Для сторонніх питань — що агент відмовив і не відповів по суті."""
 
 _judge = None
 
@@ -135,8 +137,12 @@ def llm_judge(inputs: dict, outputs: dict, reference_outputs: dict) -> dict:
     if _judge is None:
         _judge = init_chat_model(JUDGE_MODEL).with_structured_output(Verdict)
 
-    traj = "\n".join(
-        f"- {s['tool']}({s['args']}) -> {s['result'][:600]}" for s in outputs.get("trajectory", [])
+    # Суддя має бачити ТОЙ САМИЙ текст сторінок, що й агент (раніше обрізалось до 600
+    # символів — суддя бачив лише меню сайту і помилково вважав відповідь вигаданою).
+    # Список посилань сторінки судді не потрібен — відрізаємо його, щоб не роздувати промпт.
+    traj = "\n\n".join(
+        f"- {s['tool']}({s['args']}) ->\n{s['result'].split(chr(10) + 'ПОСИЛАННЯ:')[0]}"
+        for s in outputs.get("trajectory", [])
     ) or "(інструменти не викликались)"
 
     verdict: Verdict = _judge.invoke(JUDGE_PROMPT.format(
