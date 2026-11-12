@@ -145,10 +145,15 @@ agent = create_agent(
 )
 
 
-def run(question: str) -> dict:
-    """Запускає агента і повертає фінальний стан (усі повідомлення)."""
+def run(question: str, history: list[dict] | None = None) -> dict:
+    """Запускає агента і повертає фінальний стан (усі повідомлення).
+
+    history — попередні повідомлення чату [{"role": "user"/"assistant", "content": ...}],
+    щоб агент розумів уточнення («а хто там завідувач?»).
+    """
+    messages = list(history or []) + [{"role": "user", "content": question}]
     return agent.invoke(
-        {"messages": [{"role": "user", "content": question}]},
+        {"messages": messages},
         config={"recursion_limit": 25, "run_name": "web-agent"},
     )
 
