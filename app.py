@@ -11,7 +11,13 @@ import streamlit as st
 
 st.set_page_config(page_title="Веб-агент ФРЕКС", page_icon="🔎", layout="centered")
 
-from agent import final_answer, run, trajectory  # noqa: E402
+import importlib  # noqa: E402
+
+import agent as _agent  # noqa: E402
+
+# Перечитуємо agent.py, щоб зміни в ньому підхоплювались без перезапуску сайту
+_agent = importlib.reload(_agent)
+final_answer, run, trajectory = _agent.final_answer, _agent.run, _agent.trajectory
 
 # Ховаємо службове меню Streamlit (Deploy, ⋮)
 st.markdown("<style>[data-testid='stToolbar'], [data-testid='stDecoration'], #MainMenu {display: none;}</style>",
